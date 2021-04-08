@@ -1,0 +1,96 @@
+drawComet3:
+	#generate a random y-index between 3 and 30
+	li $v0, 42
+	li $a0, 0
+	li $a1, 27
+	syscall
+	addi $a0, $a0, 3 # $a0 = center y-coord of comet
+	add $a1, $zero, $a0
+	sw $a1, cometY # store the y-coord
+	li $t5, 31
+	sw $t5, cometX3
+	li $t6, 30
+	sw $t6, cometX2
+	li $t7, 29
+	sw $t7, cometX1
+	
+	cometLoop3:
+	# front part of comet
+	add $a0, $zero, $t7 # starting X-coord
+	lw $a1, cometY
+	jal pixelAddress
+	move $a0, $v0
+	lw $a1, cometColor
+	jal drawPixel
+
+	#back part of comet
+	add $a0, $zero, $t5 # starting X-coord
+	lw $a1, cometY
+	jal pixelAddress
+	move $a0, $v0
+	lw $a1, cometColor
+	jal drawPixel
+
+	#top part of comet
+	add $a0, $zero, $t6 # starting X-coord
+	lw $a1, cometY
+	addiu $a1, $a1, 1
+	jal pixelAddress
+	move $a0, $v0
+	lw $a1, cometColor
+	jal drawPixel
+	
+	#bottom part of comet
+	add $a0, $zero, $t6 # starting X-coord
+	lw $a1, cometY
+	addiu $a1, $a1, -1
+	jal pixelAddress
+	move $a0, $v0
+	lw $a1, cometColor
+	jal drawPixel
+	
+	add $t2, $zero, $t7 # old x values in $t2-$t4 (save prior to decrementing for erasing purposes)
+	add $t3, $zero, $t6
+	add $t4, $zero, $t5
+	
+	li $v0, 32
+	li $a0, 1000 # Wait one second (1000 milliseconds)
+	syscall
+	
+	addiu $t7, $t7, -1 #decredment one of the x values of comet
+	#erase the front pixel of comet
+	add $a0, $zero, $t2 #old x position
+	lw $a1, cometY
+	jal pixelAddress
+	move $a0, $v0
+	lw $a1, backgroundColor
+	jal drawPixel
+	
+	addiu $t6, $t6, -1 # decrement one of the x values of the comet
+	#erase the top pixel of comet
+	add $a0, $zero, $t3 #old x position
+	lw $a1, cometY
+	addi $a1, $a1, 1
+	jal pixelAddress
+	move $a0, $v0
+	lw $a1, backgroundColor
+	jal drawPixel
+	#erase the bottom pixel of comet
+	add $a0, $zero, $t3 # old x position
+	lw $a1, cometY
+	addiu $a1, $a1, -1
+	jal pixelAddress
+	move $a0, $v0
+	lw $a1, backgroundColor
+	jal drawPixel
+	
+	addiu $t5, $t5, -1 # decrement one of the x values of the comet
+	#erase the back pixel of comet
+	add $a0, $zero, $t4 #old x position
+	lw $a1, cometY
+	jal pixelAddress
+	move $a0, $v0
+	lw $a1, backgroundColor
+	jal drawPixel
+	
+	bne $t7, 0, cometLoop3

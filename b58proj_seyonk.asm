@@ -37,7 +37,7 @@
 .eqv SCREEN 0x10008000 # memory address of pixel (0,0)
 .eqv ROW_SHIFT	7
 .eqv TEXT 0xFF4DDBBD
-.eqv SCORE 0xFFFF6347
+#.eqv SCORE 0xFFFF6347
 
 .data
 	WIDTH:	.word 32 # 256/8 = 32
@@ -50,12 +50,15 @@
 	cometY1: .word	0
 	cometY2: .word	0
 	cometY3: .word	0
+	health:	.word 31
+	score:	.word 0
 	backgroundColor: .word 0x000000
 	borderColor:	.word 0x5A0AFF
 	shipColor:	.word 0x1afffd
 	cometColor:	.word 0x949494
 	damageColor:	.word 0xf50010
 	healthBarColor:	.word 0x05FF32
+	healthBarDmg:	.word 0xFF0000
 	comet_width:	 .word 3
 	comet_height: .word 3
 
@@ -706,6 +709,34 @@ drawRight:
 	lw $a1, backgroundColor
 	jal drawPixel
 	j mainLoop
+
+# function to update the health bar and integer health value
+updateHealth:
+	lw $t0, health # get health value (global var)
+	addiu $t0, $t0, -1 # decrement health
+	beq $t0, 0, gameOver
+	li $t1, 0
+	add $a0, $zero, $t0
+	add $a1, $zero, $t1
+	jal pixelAddress # calculate the pixel in health bar we want to color red
+	add $a0, $v0, $zero
+	lw $a1, healthBarDmg
+	jal drawPixel
+	jr $ra #jump back to the code that called us
+	
+# update the game score	
+updateScore:
+	lw $t5, score
+	addi $t5, $t5, 1
+	sw $t5, score
+	jr $ra # jump back to the code that called us
+	
+#game over screen
+gameOver:
+	#color whole screen black
+	# write END
+	# SCORE: 
+	# restart - p
 
 #function to convert coords to address of pixel
 #$a0=x-coord, $a1=y-coord

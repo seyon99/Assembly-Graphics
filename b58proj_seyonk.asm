@@ -247,7 +247,7 @@ drawComet:
 	add $t4, $zero, $t5
 	
 	li $v0, 32
-	li $a0, 500 # Wait one second (1000 milliseconds)
+	li $a0, 15 # Wait one second (1000 milliseconds)
 	syscall
 	
 	addiu $t7, $t7, -1 #decredment one of the x values of comet
@@ -729,5 +729,3 @@ drawPixel:
 exit:
 	li $v0, 10
 	syscall
-	
-	

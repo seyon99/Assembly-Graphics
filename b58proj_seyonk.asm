@@ -762,7 +762,7 @@ updateScore:
 
 # Restart the game (this function can be called at any time during the game if the user presses p)
 restartGame:
-	j initGame
+	jal main
 	
 #game over screen
 gameOver:

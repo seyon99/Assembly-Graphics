@@ -14,12 +14,12 @@
 #
 # Which milestones have been reached in this submission?
 # (See the assignment handout for descriptions of the milestones)
-# - Milestone 1/2/3/4 (choose the one the applies)
+# - Milestone 4
 #
 # Which approved features have been implemented for milestone 4?
 # (See the assignment handout for the list of additional features)
-# 1. (fill in the feature, if any)
-# 2. (fill in the feature, if any)
+# 1. Scoring system
+# 2. Smooth graphics
 # 3. (fill in the feature, if any)
 # ... (add more if necessary)
 #
@@ -27,10 +27,11 @@
 # - (insert YouTube / MyMedia / other URL here). Make sure we can view it!
 #
 # Are you OK with us sharing the video with people outside course staff?
-# - yes / no / yes, and please share this project github link as well!
+# - no
 #
 # Any additional information that the TA needs to know:
-# - (write here, if any)
+# - I used a python script to generate the code in lines 776 - 931, and they just load a color to a specific spot on the screen
+#   and these lines of code form the letters on the end screen of the game. Having comments in these lines would be tedious so I chose not to have any
 #
 #####################################################################
 
@@ -62,6 +63,9 @@
 	damageColor:	.word 0xf50010
 	healthBarColor:	.word 0x05FF32
 	healthBarDmg:	.word 0xFF0000
+	textColor:	.word 0x6FF333
+	scoreColor:	.word 0xFF0F1E
+	colonColor:	.word 0x0FABFF
 	comet_width:	 .word 3
 	comet_height: .word 3
 
@@ -77,18 +81,23 @@ main:
 	add $a2, $a2, $gp #add base of gp
 	add $a0, $gp, $zero #loop counter
 
-FillLoop:
+# function to color the screen black prior to start of game
+makeScreen:
 	beq $a0, $a2, initGame
-	sw $a1, 0($a0) #store color
+	sw $a1, 0($a0) #store background color
 	addiu $a0, $a0, 4 #increment counter
-	j FillLoop
-	
+	j makeScreen
+
+# function to store the initial coordinates of the ship	
 initGame:
 	li $t0, 3
 	sw $t0, shipHeadX
 	li $t0, 15
 	sw $t0, shipHeadY
+	li $t0, 32
+	sw $t0, health
 
+# function to draw the purple border and the full health bar
 drawBorder:
 	li $t1, 0 # X coordinate for top border line
 	topLoop:
@@ -114,7 +123,7 @@ drawBorder:
 	
 	bne $t1, 32, healthLoop
 
-
+# the loop that iterates while the ship has full health
 mainLoop:
 	jal drawComet
 	jal getInput
@@ -122,6 +131,7 @@ mainLoop:
 	jal updateHealth
 	jal mainLoop
 
+# function to draw the three obstacles/comets in the game and have them move across the screen
 drawComet:
 	#generate a random y-index for first comet, between 3 and 30
 	li $v0, 42
@@ -261,7 +271,7 @@ drawComet:
 	add $t4, $zero, $t5
 	
 	li $v0, 32
-	li $a0, 15 # Wait one second (1000 milliseconds)
+	li $a0, 10 # Wait one second (1000 milliseconds)
 	syscall
 	
 	addiu $t7, $t7, -1 #decredment one of the x values of comet
@@ -364,24 +374,27 @@ drawComet:
 	bne $t7, 0, cometLoop
 	#maybe get the program to sleep at the end of every iteration to slow comet
 
-
+# function to get keyboard input from the user
 getInput:
 
 	#get the input from the keyboard
 	li $t9, 0xffff0000 
 	lw $t8, 0($t9)
-	beq $t8, 1, keypress_happened
+	beq $t8, 1, keypress_happened # if the user pressed a key, jump to the keypress_happened function to produce an output
 
+# function that determines what a keypress will do
 keypress_happened:
 	lw $t7, 4($t9)
 	#check to see which direction to draw
-	beq $t7, 119, drawUp
-	beq  $t7, 115, drawDown
-	beq  $t7, 97, drawLeft
-	beq  $t7, 100, drawRight
+	beq $t7, 119, drawUp # user clicked "w" -> ship moves up
+	beq  $t7, 115, drawDown # user clicked "s" -> ship moves down
+	beq  $t7, 97, drawLeft # user clicked "a" -> ship moves left
+	beq  $t7, 100, drawRight # user clicked "d" -> ship moves right
+	beq $t7, 112, restartGame # user clicked "p" during the game -> restart the game
 	#jump back to get input if an unsupported key was pressed
 	j getInput
 
+# function to redraw the ship 1 pixel up
 drawUp:
 	# draw front part of ship
 	lw $t0, shipHeadX
@@ -467,7 +480,8 @@ drawUp:
 	lw $a1, backgroundColor
 	jal drawPixel
 	j changeHealthBar
-	
+
+# function to redraw the ship 1 pixel down
 drawDown:
 	lw $a0, shipHeadX
 	lw $a1, shipHeadY
@@ -555,7 +569,8 @@ drawDown:
 	lw $a1, backgroundColor
 	jal drawPixel
 	j changeHealthBar
-		
+
+# function to redraw the ship 1 pixel left	
 drawLeft:
 	# draw front part
 	lw $t0, shipHeadX
@@ -633,7 +648,8 @@ drawLeft:
 	lw $a1, backgroundColor
 	jal drawPixel
 	j changeHealthBar
-	
+
+# function to redraw the ship 1 pixel right	
 drawRight:
 	lw $t8, shipHeadX
 	lw $t9, shipHeadY
@@ -737,21 +753,208 @@ updateHealth:
 	jal drawPixel
 	jal mainLoop
 	
-# update the game score	
+# function to update the game score	
 updateScore:
 	lw $t5, score
-	addi $t5, $t5, 1
+	addi $t5, $t5, 2
 	sw $t5, score
 	jr $ra # jump back to the code that called us
+
+# Restart the game (this function can be called at any time during the game if the user presses p)
+restartGame:
+	j initGame
 	
 #game over screen
 gameOver:
-	#color whole screen black
-	# write END
-	# SCORE: 
-	# restart - p
-	li $v0, 10
-	syscall
+	lw $a0, WIDTH
+	lw $a1, backgroundColor
+	mul $a2, $a0, $a0 #total number of pixels on screen
+	mul $a2, $a2, 4 # align address
+	add $a2, $a2, $gp #add address of the screen ($gp)
+	add $a0, $gp, $zero #loop counter
+	#the loop
+	coverBackground:
+	beq $a0, $a2, drawInfo
+	sw $a1, 0($a0) #store color
+	addiu $a0, $a0, 4 #increment counter
+	j coverBackground
+	
+	lw $t6, colonColor
+	lw $t7, scoreColor
+	drawInfo:
+	# display thw word "END" on bitmap display 
+	lw $t5, textColor
+	sw $t5, 140($gp)
+	sw $t5, 144($gp)
+	sw $t5, 148($gp)
+	sw $t5, 268($gp)
+	sw $t5, 396($gp)
+	sw $t5, 400($gp)
+	sw $t5, 404($gp)
+	sw $t5, 524($gp)
+	sw $t5, 652($gp)
+	sw $t5, 656($gp)
+	sw $t5, 660($gp)
+	sw $t5, 156($gp)
+	sw $t5, 160($gp)
+	sw $t5, 284($gp)
+	sw $t5, 292($gp)
+	sw $t5, 412($gp)
+	sw $t5, 420($gp)
+	sw $t5, 540($gp)
+	sw $t5, 548($gp)
+	sw $t5, 668($gp)
+	sw $t5, 676($gp)
+	sw $t5, 172($gp)
+	sw $t5, 176($gp)
+	sw $t5, 300($gp)
+	sw $t5, 308($gp)
+	sw $t5, 428($gp)
+	sw $t5, 436($gp)
+	sw $t5, 556($gp)
+	sw $t5, 564($gp)
+	sw $t5, 684($gp)
+	sw $t5, 688($gp)
+	# display SCORE: X on bitmap display
+	sw $t5, 908($gp)
+	sw $t5, 912($gp) 
+	sw $t5, 916($gp) 
+	sw $t5, 924($gp) 
+	sw $t5, 928($gp) 
+	sw $t5, 932($gp) 
+	sw $t5, 940($gp) 
+	sw $t5, 944($gp) 
+	sw $t5, 948($gp) 
+	sw $t5, 956($gp) 
+	sw $t5, 960($gp) 
+	sw $t5, 964($gp) 
+	sw $t5, 972($gp) 
+	sw $t5, 976($gp) 
+	sw $t5, 980($gp) 
+	sw $t6, 988($gp) 
+	sw $t7, 996($gp) 
+	sw $t7, 1000($gp)
+	sw $t7, 1008($gp)
+	sw $t7, 1012($gp)
+	sw $t5, 1036($gp)
+	sw $t5, 1052($gp)
+	sw $t5, 1068($gp)
+	sw $t5, 1076($gp)
+	sw $t5, 1084($gp)
+	sw $t5, 1092($gp)
+	sw $t5, 1100($gp)
+	sw $t7, 1128($gp)
+	sw $t7, 1140($gp)
+	sw $t5, 1164($gp)
+	sw $t5, 1168($gp)
+	sw $t5, 1172($gp)
+	sw $t5, 1180($gp)
+	sw $t5, 1196($gp)
+	sw $t5, 1204($gp)
+	sw $t5, 1212($gp)
+	sw $t5, 1216($gp)
+	sw $t5, 1220($gp)	
+	sw $t5, 1228($gp)
+	sw $t5, 1232($gp)
+	sw $t5, 1236($gp)
+	sw $t7, 1252($gp)
+	sw $t7, 1256($gp)
+	sw $t7, 1268($gp)
+	sw $t5, 1300($gp)
+	sw $t5, 1308($gp)
+	sw $t5, 1324($gp)
+	sw $t5, 1332($gp)
+	sw $t5, 1340($gp)
+	sw $t5, 1344($gp)
+	sw $t5, 1356($gp)
+	sw $t7, 1384($gp)
+	sw $t7, 1392($gp)
+	sw $t5, 1420($gp)
+	sw $t5, 1424($gp)
+	sw $t5, 1428($gp)
+	sw $t5, 1436($gp)
+	sw $t5, 1440($gp)
+	sw $t5, 1444($gp)
+	sw $t5, 1452($gp)
+	sw $t5, 1456($gp)
+	sw $t5, 1460($gp)
+	sw $t5, 1468($gp)
+	sw $t5, 1476($gp)
+	sw $t5, 1484($gp)
+	sw $t5, 1488($gp)
+	sw $t5, 1492($gp)
+	sw $t6, 1500($gp)
+	sw $t7, 1508($gp)
+	sw $t7, 1512($gp)
+	sw $t7, 1520($gp)
+	sw $t7, 1524($gp)
+	# Display "p - restart" on the bitmap display
+	sw $t5, 1796($gp)
+	sw $t5, 1800($gp)
+	sw $t5, 1816($gp)
+	sw $t5, 1820($gp)
+	sw $t5, 1828($gp)
+	sw $t5, 1832($gp)
+	sw $t5, 1840($gp)
+	sw $t5, 1844($gp)
+	sw $t5, 1852($gp)
+	sw $t5, 1856($gp)
+	sw $t5, 1860($gp)
+	sw $t5, 1872($gp)
+	sw $t5, 1884($gp)
+	sw $t5, 1888($gp)
+	sw $t5, 1896($gp)
+	sw $t5, 1900($gp)
+	sw $t5, 1904($gp)
+	sw $t5, 1924($gp)
+	sw $t5, 1928($gp)
+	sw $t5, 1936($gp)
+	sw $t5, 1944($gp)
+	sw $t5, 1956($gp)
+	sw $t5, 1960($gp)
+	sw $t5, 1968($gp)
+	sw $t5, 1984($gp)
+	sw $t5, 1996($gp)
+	sw $t5, 2004($gp)
+	sw $t5, 2012($gp)
+	sw $t5, 2028($gp)
+	sw $t5, 2052($gp)
+	sw $t5, 2072($gp)
+	sw $t5, 2084($gp)
+	sw $t5, 2100($gp)
+	sw $t5, 2112($gp)
+	sw $t5, 2124($gp)
+	sw $t5, 2128($gp)
+	sw $t5, 2132($gp)
+	sw $t5, 2140($gp)
+	sw $t5, 2156($gp)
+	sw $t5, 2180($gp)
+	sw $t5, 2200($gp)
+	sw $t5, 2212($gp)
+	sw $t5, 2216($gp)
+	sw $t5, 2224($gp)
+	sw $t5, 2228($gp)
+	sw $t5, 2240($gp)
+	sw $t5, 2252($gp)
+	sw $t5, 2260($gp)
+	sw $t5, 2268($gp)
+	sw $t5, 2284($gp)
+	# get key input and jump to start of game only if p is clicked
+	#li $v0, 10
+	#syscall
+	
+	getRestartInput:
+	li $t9, 0xffff0000 # check for a keypress so user can restart the game if they want
+	lw $t8, 0($t9)
+	beq $t8, 1, restart_keypress
+	
+	restart_keypress:
+	lw $t2, 4($t9) 
+	beq $t2, 112, doRestart
+	j getRestartInput
+	
+	doRestart:
+	jal main
 
 #function to convert coords to address of pixel
 #$a0=x-coord, $a1=y-coord
@@ -772,6 +975,7 @@ drawPixel:
 	sw $a1, ($a0) 	#fill the coord (x,y) w/ the color stored in $a1
 	jr $ra		
 
+# function to exit the program (used for testing purposes)
 exit:
 	li $v0, 10
 	syscall

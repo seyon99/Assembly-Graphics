@@ -118,7 +118,9 @@ drawBorder:
 mainLoop:
 	jal drawComet
 	jal getInput
-	j updateHealth
+	changeHealthBar:
+	jal updateHealth
+	jal mainLoop
 
 drawComet:
 	#generate a random y-index for first comet, between 3 and 30
@@ -464,7 +466,7 @@ drawUp:
 	add $a0, $v0, $zero
 	lw $a1, backgroundColor
 	jal drawPixel
-	j mainLoop
+	j changeHealthBar
 	
 drawDown:
 	lw $a0, shipHeadX
@@ -552,7 +554,7 @@ drawDown:
 	add $a0, $v0, $zero
 	lw $a1, backgroundColor
 	jal drawPixel
-	j mainLoop
+	j changeHealthBar
 		
 drawLeft:
 	# draw front part
@@ -630,7 +632,7 @@ drawLeft:
 	add $a0, $v0, $zero
 	lw $a1, backgroundColor
 	jal drawPixel
-	j mainLoop
+	j changeHealthBar
 	
 drawRight:
 	lw $t8, shipHeadX
@@ -717,42 +719,23 @@ drawRight:
 	add $a0, $v0, $zero
 	lw $a1, backgroundColor
 	jal drawPixel
-	j mainLoop
+	j changeHealthBar
 
 # function to update the health bar and integer health value
 updateHealth:
-	# check if coords are equal
-	lw $t2, tempX1
-	lw $t3, tempX2
-	lw $t4, tempX3
-	lw $t8, shipHeadX
-	beq $t2, $t8, checkY # tempX1 == shipHeadX
-	beq $t3, $t8, checkY
-	beq $t4, $t8, checkY
-	j mainLoop # jump back to the main loop because there's no collision
 	
-	checkY:
-	lw $t5, cometY1
-	lw $t6, cometY2
-	lw $t7, cometY3
-	lw $t9, shipHeadY
-	beq $t5, $t9, updateIt
-	beq $t6, $t9, updateIt
-	beq $t7, $t9, updateIt
-	j mainLoop # jump back to the main loop because there's no collision
-	
-	updateIt:
 	lw $t0, health # get health value (global var)
 	addiu $t0, $t0, -1 # decrement health
-	beq $t0, 0, gameOver
+	beq $t0, -1, gameOver
 	li $t1, 0
 	add $a0, $zero, $t0
-	add $a1, $zero, $t1
+	addi $a1, $zero, 0
 	jal pixelAddress # calculate the pixel in health bar we want to color red
 	add $a0, $v0, $zero
 	lw $a1, healthBarDmg
+	sw $t0, health
 	jal drawPixel
-	j mainLoop
+	jal mainLoop
 	
 # update the game score	
 updateScore:
@@ -767,6 +750,8 @@ gameOver:
 	# write END
 	# SCORE: 
 	# restart - p
+	li $v0, 10
+	syscall
 
 #function to convert coords to address of pixel
 #$a0=x-coord, $a1=y-coord

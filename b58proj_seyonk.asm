@@ -44,13 +44,16 @@
 	HEIGHT:	.word 32
 	shipHeadX: .word 0 
 	shipHeadY: .word 0
+	tempX1:	.word 0 # for collision function
+	tempX2:	.word 0 # for collision function
+	tempX3:	.word 0 # for collision function
 	cometX1:  .word	31
 	cometX2:  .word 30
 	cometX3:	.word 29
 	cometY1: .word	0
 	cometY2: .word	0
 	cometY3: .word	0
-	health:	.word 31
+	health:	.word 32
 	score:	.word 0
 	backgroundColor: .word 0x000000
 	borderColor:	.word 0x5A0AFF
@@ -114,8 +117,8 @@ drawBorder:
 
 mainLoop:
 	jal drawComet
-	j getInput
-	
+	jal getInput
+	j updateHealth
 
 drawComet:
 	#generate a random y-index for first comet, between 3 and 30
@@ -153,6 +156,8 @@ drawComet:
 	cometLoop:
 	# front part of comet1
 	add $a0, $zero, $t7 # starting X-coord
+	add $t9, $zero, $t7 # starting X-coord (copy for calculating collison)
+	sw $t9, tempX1
 	lw $a1, cometY1
 	jal pixelAddress
 	move $a0, $v0
@@ -160,6 +165,8 @@ drawComet:
 	jal drawPixel
 	#front part of comet2
 	add $a0, $zero, $t7 # starting X-coord
+	add $t9, $zero, $t7 # starting X-coord (copy for calculating collison)
+	sw $t9, tempX2
 	lw $a1, cometY2
 	jal pixelAddress
 	move $a0, $v0
@@ -167,6 +174,8 @@ drawComet:
 	jal drawPixel
 	#front part of comet2
 	add $a0, $zero, $t7 # starting X-coord
+	add $t9, $zero, $t7 # starting X-coord (copy for calculating collison)
+	sw $t9, tempX1
 	lw $a1, cometY3
 	jal pixelAddress
 	move $a0, $v0
@@ -712,6 +721,27 @@ drawRight:
 
 # function to update the health bar and integer health value
 updateHealth:
+	# check if coords are equal
+	lw $t2, tempX1
+	lw $t3, tempX2
+	lw $t4, tempX3
+	lw $t8, shipHeadX
+	beq $t2, $t8, checkY # tempX1 == shipHeadX
+	beq $t3, $t8, checkY
+	beq $t4, $t8, checkY
+	j mainLoop # jump back to the main loop because there's no collision
+	
+	checkY:
+	lw $t5, cometY1
+	lw $t6, cometY2
+	lw $t7, cometY3
+	lw $t9, shipHeadY
+	beq $t5, $t9, updateIt
+	beq $t6, $t9, updateIt
+	beq $t7, $t9, updateIt
+	j mainLoop # jump back to the main loop because there's no collision
+	
+	updateIt:
 	lw $t0, health # get health value (global var)
 	addiu $t0, $t0, -1 # decrement health
 	beq $t0, 0, gameOver
@@ -722,7 +752,7 @@ updateHealth:
 	add $a0, $v0, $zero
 	lw $a1, healthBarDmg
 	jal drawPixel
-	jr $ra #jump back to the code that called us
+	j mainLoop
 	
 # update the game score	
 updateScore:

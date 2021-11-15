@@ -1,10 +1,3 @@
-#####################################################################
-#
-# CSCB58 Winter 2021 Assembly Final Project
-# University of Toronto, Scarborough
-#
-# Student: Seyon Kuganesan, 1004260729, kugane22
-#
 # Bitmap Display Configuration:
 # - Unit width in pixels: 8
 # - Unit height in pixels: 8

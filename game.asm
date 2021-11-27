@@ -5,27 +5,6 @@
 # - Display width in pixels: 256
 # - Display height in pixels: 256
 # - Base Address for Display: 0x10008000 ($gp)
-#
-# Which milestones have been reached in this submission?
-# (See the assignment handout for descriptions of the milestones)
-# - Milestone 4
-#
-# Which approved features have been implemented for milestone 4?
-# (See the assignment handout for the list of additional features)
-# 1. Scoring system
-# 2. Smooth graphics
-# ... (add more if necessary)
-#
-# Link to video demonstration for final submission:
-# - https://www.youtube.com/watch?v=mbcBvRNETDQ
-#
-# Are you OK with us sharing the video with people outside course staff?
-# - no
-#
-# Any additional information that the TA needs to know:
-# - I used a python script to generate the code in lines 776 - 931, and they just load a color to a specific spot on the screen
-#   and these lines of code form the letters on the end screen of the game. Writing comments for these lines would be tedious so I chose not to have any.
-#
 #####################################################################
 
 .eqv SCREEN 0x10008000 # memory address of pixel (0,0)

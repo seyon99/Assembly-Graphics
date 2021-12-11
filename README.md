@@ -1,3 +1,3 @@
-# B58_Project
+# CSCB58 Final Project
 
-This is a spaceship game built using MIPS assembly language for CSCB58.
+This is a spaceship shooter game built using the MIPS assembly language for CSCB58.
